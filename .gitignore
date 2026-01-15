@@ -1,0 +1,10 @@
+bin/
+lib/
+include/glad/
+include/GLFW/
+include/glm/
+include/KHR/
+
+glad.c
+
+*.aseprite
