@@ -14,7 +14,7 @@ private:
     float vertices[36 * 9];
     int indices[12];
 public:
-    Voxel(Coord2D tex_coord_side, Coord2D tex_coord_top, Coord2D tex_coord_bot, float width, float height);
+    Voxel(glm::vec2 tex_coord_side, glm::vec2 tex_coord_top, glm::vec2 tex_coord_bot, float width, float height);
 
     void use();
     void destroy();

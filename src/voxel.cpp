@@ -1,6 +1,6 @@
 #include "../include/voxel.h"
 
-Voxel::Voxel(Coord2D tex_coord_side, Coord2D tex_coord_top, Coord2D tex_coord_bot, float width, float height)
+Voxel::Voxel(glm::vec2 tex_coord_side, glm::vec2 tex_coord_top, glm::vec2 tex_coord_bot, float width, float height)
     : vertices{
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, tex_coord_side.x, tex_coord_side.y,
         0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, tex_coord_side.x + width, tex_coord_side.y,

@@ -1,26 +1,23 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-struct Coord2D {
-    float x;
-    float y;
-    constexpr Coord2D(float x, float y) : x(x), y(y) {}
-};
-
-struct Coord3D {
-    float x;
-    float y;
-    float z;
-    constexpr Coord3D(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
-};
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace WINDOW {
     constexpr int WIDTH = 1280;
     constexpr int HEIGHT = 720;
 }
 
+namespace SPACE {
+    constexpr glm::vec3 VECTOR_UP(0.0f, 1.0f, 0.0f);
+}
+
 namespace PLAYER {
-    constexpr Coord3D DEFAULT_POS(0.0f, 2.0f, -3.0f);
+    constexpr glm::vec3 DEFAULT_POS(0.0f, 2.0f, -3.0f);
 }
 
 #endif

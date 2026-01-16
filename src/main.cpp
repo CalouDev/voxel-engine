@@ -3,27 +3,18 @@
 #include <math.h>
 #include <filesystem>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
+#include "../include/globals.h"
+#include "../include/texture.h"
+#include "../include/voxel.h"
 #include "../include/shader.h"
+#include "../include/camera.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 
-#include "../include/globals.h"
-#include "../include/texture.h"
-#include "../include/voxel.h"
-
 float camera_spd_const = 5.0f;
-glm::vec3 cameraPos = glm::vec3(0.0f, 2.0f, -3.0f);
-glm::vec3 cameraDirection = glm::normalize(glm::vec3(-1.0f, 0.0f, 0.0f));
-glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+Camera camera_player(PLAYER::DEFAULT_POS, glm::normalize(glm::vec3(0.0f)));
 
 float deltaTime, currentFrame;
 float lastFrame = 0.0f;
@@ -55,20 +46,20 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     yaw += xoffset;
     pitch += yoffset;
 
-    if (pitch > 89.0f)
+    if (pitch > 89.0f) {
         pitch = 89.0f;
-    else if (pitch < -89.0f)
+    } else if (pitch < -89.0f) {
         pitch = -89.0f;
+    }
 
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraDirection = glm::normalize(direction);
-    cameraRight = glm::normalize(glm::cross(cameraDirection, up));
-    cameraUp = glm::normalize(glm::cross(cameraRight, cameraDirection));
+    glm::vec3 new_direction;
+    new_direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    new_direction.y = sin(glm::radians(pitch));
+    new_direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
-
+    camera_player.setDirection(new_direction);
+    camera_player.setRight(glm::normalize(glm::cross(camera_player.getDirection(), SPACE::VECTOR_UP)));
+    camera_player.setUp(glm::normalize(glm::cross(camera_player.getRight(), camera_player.getDirection())));
 }
 
 void processInput(GLFWwindow *window) {
@@ -97,19 +88,19 @@ void processInput(GLFWwindow *window) {
     }
     
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        cameraPos += (camera_spd * cameraDirection);
+        camera_player.move((camera_spd * camera_player.getDirection()));
     }
     
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        cameraPos -= (camera_spd * cameraDirection);
+        camera_player.move(-(camera_spd * camera_player.getDirection()));
     }
     
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        cameraPos -= (camera_spd * cameraRight);
+        camera_player.move(-(camera_spd * camera_player.getRight()));
     } 
     
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        cameraPos += (camera_spd * cameraRight);
+        camera_player.move(camera_spd * camera_player.getRight());
     }
     
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
@@ -118,8 +109,6 @@ void processInput(GLFWwindow *window) {
 }
 
 int main(void) {
-    glm::mat4 trans = glm::mat4(1.0f);
-
     if (!glfwInit()) {
         std::cerr << "Failed to init GLFW lib" << std::endl;
         exit(EXIT_FAILURE);
@@ -159,6 +148,7 @@ int main(void) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
@@ -357,7 +347,7 @@ int main(void) {
         glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        view = glm::lookAt(cameraPos, cameraPos + cameraDirection, cameraUp);
+        view = glm::lookAt(camera_player.getPos(), camera_player.getPos() + camera_player.getDirection(), camera_player.getUp());
         projection = glm::perspective(glm::radians(45.0f), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
 
         classicShader.use();
@@ -457,7 +447,7 @@ int main(void) {
         glUniformMatrix4fv(glGetUniformLocation(lightingShader.getId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(glGetUniformLocation(lightingShader.getId(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(lightingShader.getId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniform3fv(glGetUniformLocation(lightingShader.getId(), "playerPos"), 1, glm::value_ptr(cameraPos));
+        glUniform3fv(glGetUniformLocation(lightingShader.getId(), "playerPos"), 1, glm::value_ptr(camera_player.getPos()));
         glBindTexture(GL_TEXTURE_2D, texture2);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         model = glm::mat4(1.0f);
