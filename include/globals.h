@@ -17,7 +17,7 @@ namespace SPACE {
 }
 
 namespace PLAYER {
-    constexpr glm::vec3 DEFAULT_POS(0.0f, 2.0f, -3.0f);
+    constexpr glm::vec3 DEFAULT_POS(0.0f, 2.0f, 0.0f);
 }
 
 #endif

@@ -13,7 +13,11 @@ private:
 public:
     VoxelManager();
 
+    void add(Voxel voxel);
     void use();
+    void destroy();
+
+    std::vector<Voxel> getManager() const { return manager; }
 };
 
 #endif

@@ -6,6 +6,7 @@
 #include "../include/globals.h"
 #include "../include/texture.h"
 #include "../include/voxel.h"
+#include "../include/voxel_manager.h"
 #include "../include/shader.h"
 #include "../include/camera.h"
 
@@ -29,7 +30,7 @@ bool firstMouse = true;
 bool isFullscreen = false;
 bool pressed = false;
 
-glm::vec3 lightPos(1.0f, 3.0f, -2.0f);
+glm::vec3 lightPos(3.0f, 1.0f, 0.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -88,11 +89,11 @@ void processInput(GLFWwindow *window) {
     }
     
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera_player.move((camera_spd * camera_player.getDirection()));
+        camera_player.move((camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
     }
     
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        camera_player.move(-(camera_spd * camera_player.getDirection()));
+        camera_player.move(-(camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
     }
     
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
@@ -117,13 +118,12 @@ int main(void) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(WINDOW::WIDTH, WINDOW::HEIGHT, "",  NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WINDOW::WIDTH, WINDOW::HEIGHT, "OpenGL 3.3",  NULL, NULL);
     
     if (window == nullptr) {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -139,12 +139,6 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
 
-    int major, minor;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
-    std::string title = "Running using OpenGL " + std::to_string(major) + "." + std::to_string(minor);
-    glfwSetWindowTitle(window, title.c_str());
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -152,11 +146,12 @@ int main(void) {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    Voxel dirt_voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT);
-    Voxel wall_voxel(TEX::WALL::SIDE, TEX::WALL::TOP, TEX::WALL::BOT, TEX::WALL::WIDTH, TEX::WALL::HEIGHT);
+    VoxelManager voxel_manager;
 
-    dirt_voxel.use();
-    wall_voxel.use();
+    voxel_manager.add(Voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT));
+    voxel_manager.add(Voxel(TEX::WALL::SIDE, TEX::WALL::TOP, TEX::WALL::BOT, TEX::WALL::WIDTH, TEX::WALL::HEIGHT));
+
+    voxel_manager.use();
 
     float door_vertices[] = {
         -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, TEX::DOOR::SIDE.x, TEX::DOOR::SIDE.y,
@@ -297,7 +292,7 @@ int main(void) {
 
     unsigned int texture2;
     glGenTextures(1, &texture2);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture2);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -306,6 +301,26 @@ int main(void) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tileset_width2, tileset_height2, 0, GL_RGBA, GL_UNSIGNED_BYTE, tileset_data2);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(tileset_data2);
+
+    int container_specular_map_width, container_specular_map_height, container_specular_map_nr_channels;
+    unsigned char *container_specular_map_data = stbi_load("./assets/sprites/container2_specular.png", &container_specular_map_width, &container_specular_map_height, &container_specular_map_nr_channels, 0);
+
+    if (!container_specular_map_data) {
+        std::cerr << "Failed to load texture" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    unsigned int tex_container_specular_map;
+    glGenTextures(1, &tex_container_specular_map);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, tex_container_specular_map);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, container_specular_map_width, container_specular_map_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, container_specular_map_data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(container_specular_map_data);
 
     Shader lightingSourceShader("./shaders/shader_vs_light.glsl", "./shaders/shader_fs_light_source.glsl");
     lightingSourceShader.use();
@@ -351,12 +366,13 @@ int main(void) {
         projection = glm::perspective(glm::radians(45.0f), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
 
         classicShader.use();
+        classicShader.setInt("tex", 0);
         glUniformMatrix4fv(glGetUniformLocation(classicShader.getId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(glGetUniformLocation(classicShader.getId(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(classicShader.getId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        glBindVertexArray(dirt_voxel.getVAO());
         glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(voxel_manager.getManager()[0].getVAO());
 
         for (int i = -10; i <= 10; ++i) {
             for (int j = -10; j <= 10; ++j) {
@@ -381,8 +397,8 @@ int main(void) {
             }
         }
 
-
-        glBindVertexArray(wall_voxel.getVAO());
+        glBindVertexArray(voxel_manager.getManager()[1].getVAO());
+        glBindTexture(GL_TEXTURE_2D, texture);
 
         for (int j = 1; j <= 5; ++j) {
             if (j == 3) continue;
@@ -431,28 +447,28 @@ int main(void) {
 
         lightingShader.use();
         glBindTexture(GL_TEXTURE_2D, texture2);
-        glUniform3fv(glGetUniformLocation(lightingShader.getId(), "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
-        glUniform3fv(glGetUniformLocation(lightingShader.getId(), "lightColor"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-        glUniform3fv(glGetUniformLocation(lightingShader.getId(), "lightPos"), 1, glm::value_ptr(lightPos));
-        lightingShader.setVec3("material.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-        lightingShader.setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
-        lightingShader.setVec3("material.specular", glm::vec3(1.0f));
-        lightingShader.setFloat("material.shininess", 32.0f);
+        glBindTexture(GL_TEXTURE_2D, tex_container_specular_map);
+        lightingShader.setVec3("light.pos", lightPos);
         lightingShader.setVec3("light.ambient", glm::vec3(0.4f, 0.4f, 0.4f));
         lightingShader.setVec3("light.diffuse", glm::vec3(0.7f, 0.7f, 0.7f));
         lightingShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        lightingShader.setInt("material.diffuse", 1);
+        lightingShader.setInt("material.specular", 2);
+        lightingShader.setFloat("material.shininess", 32.0f);
+        lightingShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+        lightingShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
         glBindVertexArray(lightVAO);
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
-        glUniformMatrix4fv(glGetUniformLocation(lightingShader.getId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(lightingShader.getId(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(lightingShader.getId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniform3fv(glGetUniformLocation(lightingShader.getId(), "playerPos"), 1, glm::value_ptr(camera_player.getPos()));
-        glBindTexture(GL_TEXTURE_2D, texture2);
+        lightingShader.setMat4("model", model);
+        lightingShader.setMat4("view", view);
+        lightingShader.setMat4("projection", projection);
+        lightingShader.setVec3("cameraPos", camera_player.getPos());
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(4.0f, 1.0f, 3.0f));
-        glUniformMatrix4fv(glGetUniformLocation(lightingShader.getId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        lightingShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         lightingSourceShader.use();
@@ -474,8 +490,9 @@ int main(void) {
         glfwPollEvents();
     }
 
-    dirt_voxel.destroy();
-    wall_voxel.destroy();
+    voxel_manager.destroy();
+    glDeleteVertexArrays(1, &VAO_door);
+    glDeleteVertexArrays(1, &lightVAO);
 
     glfwTerminate();
 

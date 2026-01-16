@@ -1,5 +1,5 @@
 #ifndef VOXEL_H
-#define VOXEl_H
+#define VOXEL_H
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
