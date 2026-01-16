@@ -320,6 +320,29 @@ int main(void) {
     Shader lightingSourceShader("./shaders/shader_vs_light.glsl", "./shaders/shader_fs_light_source.glsl");
     lightingSourceShader.use();
 
+    float crosshair_vertices[] = {
+        WINDOW::WIDTH/2 - 10, WINDOW::HEIGHT/2, 1.0f, 1.0f, 1.0f, 1.0f,
+        WINDOW::WIDTH/2 + 10, WINDOW::HEIGHT/2, 1.0f, 1.0f, 1.0f, 1.0f,
+        WINDOW::WIDTH/2, WINDOW::HEIGHT/2 - 10, 1.0f, 1.0f, 1.0f, 1.0f,
+        WINDOW::WIDTH/2, WINDOW::HEIGHT/2 + 10, 1.0f, 1.0f, 1.0f, 1.0f
+    };
+
+    unsigned int crosshairVBO;
+    glGenBuffers(1, &crosshairVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(crosshair_vertices), crosshair_vertices, GL_STATIC_DRAW);
+
+    unsigned int crossHairVAO;
+    glGenVertexArrays(1, &crossHairVAO);
+    glBindVertexArray(crossHairVAO);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    Shader crosshairShader("./shaders/shader_vs_default_2d.glsl", "./shaders/shader_fs_default_2d.glsl");
+    crosshairShader.use();
+
     glm::mat4 view;
     glm::mat4 projection;
     glm::mat4 model;
@@ -449,8 +472,13 @@ int main(void) {
         glUniformMatrix4fv(glGetUniformLocation(lightingSourceShader.getId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(glGetUniformLocation(lightingSourceShader.getId(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(lightingSourceShader.getId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        crosshairShader.use();
+        glBindVertexArray(crossHairVAO);
+        projection = glm::ortho(0.0f, (float)WINDOW::WIDTH, 0.0f, (float)WINDOW::HEIGHT);
+        crosshairShader.setMat4("projection", projection);
+        glDrawArrays(GL_LINES, 0, 4);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
