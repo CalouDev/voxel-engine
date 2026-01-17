@@ -367,9 +367,9 @@ int main(void) {
 
         classicShader.use();
         classicShader.setInt("tex", 0);
-        glUniformMatrix4fv(glGetUniformLocation(classicShader.getId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(classicShader.getId(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(classicShader.getId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        classicShader.setMat4("model", model);
+        classicShader.setMat4("view", view);
+        classicShader.setMat4("projection", projection);
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(voxel_manager.getManager()[0].getVAO());
@@ -452,6 +452,9 @@ int main(void) {
         lightingShader.setVec3("light.ambient", glm::vec3(0.4f, 0.4f, 0.4f));
         lightingShader.setVec3("light.diffuse", glm::vec3(0.7f, 0.7f, 0.7f));
         lightingShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        lightingShader.setFloat("light.constant", 1.0f);
+        lightingShader.setFloat("light.linear", 0.07f);
+        lightingShader.setFloat("light.quadratic", 0.017f);
         lightingShader.setInt("material.diffuse", 1);
         lightingShader.setInt("material.specular", 2);
         lightingShader.setFloat("material.shininess", 32.0f);
