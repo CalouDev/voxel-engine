@@ -6,13 +6,16 @@
 
 class Player {
 private:
-    Camera camera;
     glm::vec3 pos;
+    float spd;
+    Camera camera;
 
 public:
-    Player(glm::vec3 _pos, Camera& _camera);
+    Player(glm::vec3 _pos, float _spd, Camera& _camera);
 
     void move(glm::vec3 vec);
+
+    float getSpd() const { return spd; }
 };
 
 #endif

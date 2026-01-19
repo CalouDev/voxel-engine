@@ -13,24 +13,24 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 
-float camera_spd_const = 5.0f;
-
 Camera camera_player(PLAYER::DEFAULT_POS, glm::normalize(glm::vec3(0.0f)));
 
 float deltaTime, currentFrame;
 float lastFrame = 0.0f;
 
-float lastMouseX = 400.0f;
-float lastMouseY = 300.0f;
+float lastMouseX = WINDOW::WIDTH/2.0f;
+float lastMouseY = WINDOW::HEIGHT/2.0f;
 
-float pitch = 0.0f, yaw = -90.0f;
-
-bool firstMouse = true;
+float pitch = 0.0f;
+float yaw = -90.0f;
+float sensitivity = 0.1f;
 
 bool isFullscreen = false;
 bool pressed = false;
 
-glm::vec3 lightPos(3.0f, 1.0f, 0.0f);
+glm::vec3 lightPos(3.0f, 10.0f, 0.0f);
+
+bool isFlashlight = false;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -41,7 +41,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     float yoffset = lastMouseY - ypos;
     lastMouseX = xpos;
     lastMouseY = ypos;
-    const float sensitivity = 0.1f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
     yaw += xoffset;
@@ -64,7 +63,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 void processInput(GLFWwindow *window) {
-    float camera_spd = camera_spd_const * deltaTime;
+    float camera_spd = 8.0f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
@@ -104,8 +103,10 @@ void processInput(GLFWwindow *window) {
         camera_player.move(camera_spd * camera_player.getRight());
     }
     
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+        isFlashlight = true;
+    } else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE) {
+        isFlashlight = false;
     }
 }
 
@@ -365,17 +366,24 @@ int main(void) {
         projection = glm::perspective(glm::radians(45.0f), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
 
         lightingShader.use();
-        lightingShader.setVec3("dirLight.direction", glm::vec3(-0.1f, -0.1f, 0.3f));
+        lightingShader.setVec3("dirLight.direction", glm::vec3(0.0f, -1.0f, 0.0f));
+        lightingShader.setVec3("dirLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+        lightingShader.setVec3("dirLight.diffuse", glm::vec3(0.1f));
+        lightingShader.setVec3("dirLight.specular", glm::vec3(0.1f));
+        lightingShader.setVec3("spotLight.position", camera_player.getPos());
+        lightingShader.setVec3("spotLight.direction", camera_player.getDirection());
         lightingShader.setVec3("dirLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
         lightingShader.setVec3("dirLight.diffuse", glm::vec3(0.5f));
         lightingShader.setVec3("dirLight.specular", glm::vec3(0.5f));
+        lightingShader.setFloat("spotlight.cutOff",  12.5f);
+        lightingShader.setFloat("spotlight.outerCutOff", 17.5);
         lightingShader.setVec3("pointLights[0].pos", lightPos);
         lightingShader.setVec3("pointLights[0].ambient", glm::vec3(0.4f, 0.4f, 0.4f));
-        lightingShader.setVec3("pointLights[0].diffuse", glm::vec3(0.7f, 0.7f, 0.7f));
+        lightingShader.setVec3("pointLights[0].diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
         lightingShader.setVec3("pointLights[0].specular", glm::vec3(1.0f, 1.0f, 1.0f));
-        lightingShader.setFloat("pointLights[0].constant", 1.0f);
-        lightingShader.setFloat("pointLights[0].linear", 0.07f);
-        lightingShader.setFloat("pointLights[0].quadratic", 0.017f);
+        lightingShader.setFloat("pointLights[0].constant", ATTENUATIONS[9].constant);
+        lightingShader.setFloat("pointLights[0].linear", ATTENUATIONS[9].linear);
+        lightingShader.setFloat("pointLights[0].quadratic", ATTENUATIONS[9].quadratic);
         /*lightingShader.setVec3("pointLights[1].pos", glm::vec3(2.0f, 3.0f, 5.0f));
         lightingShader.setVec3("pointLights[1].ambient", glm::vec3(0.4f, 0.4f, 0.4f));
         lightingShader.setVec3("pointLights[1].diffuse", glm::vec3(0.7f, 0.7f, 0.7f));
@@ -386,7 +394,7 @@ int main(void) {
         lightingShader.setInt("material.diffuse", 0);
         lightingShader.setInt("material.specular", 0);
         lightingShader.setFloat("material.shininess", 0.0f);
-        lightingShader.setBool("noSpecular", true);
+        lightingShader.setBool("noSpecular", true); // change with a black/with texture (specular map full or none)
         lightingShader.setMat4("view", view);
         lightingShader.setMat4("projection", projection);
         lightingShader.setVec3("cameraPos", camera_player.getPos());
@@ -396,21 +404,21 @@ int main(void) {
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(voxel_manager.getManager()[0].getVAO());
 
-        for (int i = -10; i <= 10; ++i) {
-            for (int j = -10; j <= 10; ++j) {
+        for (int i = -20; i <= 20; ++i) {
+            for (int j = -20; j <= 20; ++j) {
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3((float)i, 0.0f, (float)j));
                 lightingShader.setMat4("model", model);
                 glDrawArrays(GL_TRIANGLES, 0, 36);
 
-                if (i == -10 || i == 10) {
+                if (i == -20 || i == 20) {
                     model = glm::mat4(1.0f);
                     model = glm::translate(model, glm::vec3((float)i, 1.0f, (float)j));
                     lightingShader.setMat4("model", model);
                     glDrawArrays(GL_TRIANGLES, 0, 36);
                 }
 
-                if (j == -10 || j == 10) {
+                if (j == -20 || j == 20) {
                     model = glm::mat4(1.0f);
                     model = glm::translate(model, glm::vec3((float)i, 1.0f, (float)j));
                     lightingShader.setMat4("model", model);
