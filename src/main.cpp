@@ -30,6 +30,8 @@ bool pressed = false;
 
 glm::vec3 lightPos(3.0f, 10.0f, 0.0f);
 
+float fov = 45.0f;
+
 bool isFlashlight = false;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -91,22 +93,29 @@ void processInput(GLFWwindow *window) {
         camera_player.move((camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
     }
     
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         camera_player.move(-(camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
     }
     
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         camera_player.move(-(camera_spd * camera_player.getRight()));
     } 
     
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         camera_player.move(camera_spd * camera_player.getRight());
     }
     
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-        isFlashlight = true;
-    } else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE) {
-        isFlashlight = false;
+        isFlashlight = !isFlashlight;
+    }
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    fov -= (float)yoffset;
+    if (fov < 1.0f) {
+        fov = 1.0f;
+    } else if (fov > 45.0f) {
+        fov = 45.0f;
     }
 }
 
@@ -146,6 +155,7 @@ int main(void) {
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     VoxelManager voxel_manager;
 
@@ -363,7 +373,7 @@ int main(void) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         view = glm::lookAt(camera_player.getPos(), camera_player.getPos() + camera_player.getDirection(), camera_player.getUp());
-        projection = glm::perspective(glm::radians(45.0f), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
+        projection = glm::perspective(glm::radians(fov), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
 
         lightingShader.use();
         lightingShader.setVec3("dirLight.direction", glm::vec3(0.0f, -1.0f, 0.0f));
@@ -372,9 +382,9 @@ int main(void) {
         lightingShader.setVec3("dirLight.specular", glm::vec3(0.1f));
         lightingShader.setVec3("spotLight.position", camera_player.getPos());
         lightingShader.setVec3("spotLight.direction", camera_player.getDirection());
-        lightingShader.setVec3("dirLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-        lightingShader.setVec3("dirLight.diffuse", glm::vec3(0.5f));
-        lightingShader.setVec3("dirLight.specular", glm::vec3(0.5f));
+        lightingShader.setVec3("spotLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+        lightingShader.setVec3("spotLight.diffuse", glm::vec3(0.5f));
+        lightingShader.setVec3("spotLight.specular", glm::vec3(0.5f));
         lightingShader.setFloat("spotlight.cutOff",  12.5f);
         lightingShader.setFloat("spotlight.outerCutOff", 17.5);
         lightingShader.setVec3("pointLights[0].pos", lightPos);
