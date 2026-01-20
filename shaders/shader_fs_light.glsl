@@ -27,6 +27,7 @@ struct SpotLight {
     vec3 specular;
     float cutOff;
     float outerCutOff;
+    bool on;
 };
 
 struct Material {
@@ -137,6 +138,10 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
     if (theta > light.cutOff) {
         result += diffuse + specular;
+    }
+
+    if (!light.on) {
+        result = vec3(0.0);
     }
 
     return result;

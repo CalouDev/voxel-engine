@@ -23,7 +23,7 @@ float lastMouseY = WINDOW::HEIGHT/2.0f;
 
 float pitch = 0.0f;
 float yaw = -90.0f;
-float sensitivity = 0.1f;
+float sensitivity = 0.05f;
 
 bool isFullscreen = false;
 bool pressed = false;
@@ -33,6 +33,9 @@ glm::vec3 lightPos(3.0f, 10.0f, 0.0f);
 float fov = 45.0f;
 
 bool isFlashlight = false;
+bool canFlashlight = true;
+
+bool canCrouch = true;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -104,9 +107,26 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         camera_player.move(camera_spd * camera_player.getRight());
     }
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+        if (canCrouch) {
+            camera_player.move(glm::vec3(0.0f, -0.75f, 0.0f));
+            canCrouch = false;
+        }
+    } else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_RELEASE) {
+        if (!canCrouch) {
+            camera_player.move(glm::vec3(0.0f, 0.75f, 0.0f));
+        }
+        canCrouch = true;
+    }
     
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-        isFlashlight = !isFlashlight;
+        if (canFlashlight) {
+            isFlashlight = !isFlashlight;
+            canFlashlight = false;
+        }
+    } else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE) {
+        canFlashlight = true;
     }
 }
 
@@ -376,17 +396,18 @@ int main(void) {
         projection = glm::perspective(glm::radians(fov), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
 
         lightingShader.use();
-        lightingShader.setVec3("dirLight.direction", glm::vec3(0.0f, -1.0f, 0.0f));
-        lightingShader.setVec3("dirLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+        lightingShader.setVec3("dirLight.direction", glm::vec3(0.0f, -0.1f, 0.0f));
+        lightingShader.setVec3("dirLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
         lightingShader.setVec3("dirLight.diffuse", glm::vec3(0.1f));
         lightingShader.setVec3("dirLight.specular", glm::vec3(0.1f));
         lightingShader.setVec3("spotLight.position", camera_player.getPos());
         lightingShader.setVec3("spotLight.direction", camera_player.getDirection());
-        lightingShader.setVec3("spotLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+        lightingShader.setBool("spotLight.on", isFlashlight);
+        lightingShader.setVec3("spotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
         lightingShader.setVec3("spotLight.diffuse", glm::vec3(0.5f));
-        lightingShader.setVec3("spotLight.specular", glm::vec3(0.5f));
-        lightingShader.setFloat("spotlight.cutOff",  12.5f);
-        lightingShader.setFloat("spotlight.outerCutOff", 17.5);
+        lightingShader.setVec3("spotLight.specular", glm::vec3(0.1f));
+        lightingShader.setFloat("spotlight.cutOff",  1.25f);
+        lightingShader.setFloat("spotlight.outerCutOff", 1.75);
         lightingShader.setVec3("pointLights[0].pos", lightPos);
         lightingShader.setVec3("pointLights[0].ambient", glm::vec3(0.4f, 0.4f, 0.4f));
         lightingShader.setVec3("pointLights[0].diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
