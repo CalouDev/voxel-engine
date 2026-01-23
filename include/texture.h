@@ -20,6 +20,14 @@ namespace TEX {
         constexpr float HEIGHT = 0.1f;
     }
 
+    namespace GLASS {
+        constexpr glm::vec2 SIDE(0.0f, 0.4f);
+        constexpr glm::vec2 TOP(0.0f, 0.04);
+        constexpr glm::vec2 BOT(0.0f, 0.04);
+        constexpr float WIDTH = 0.1f;
+        constexpr float HEIGHT = 0.1f;
+    }
+
     namespace DOOR {
         constexpr glm::vec2 SIDE(0.0f, 0.6f);
         constexpr float WIDTH = 0.1f;

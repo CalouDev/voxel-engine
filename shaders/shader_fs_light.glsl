@@ -30,10 +30,12 @@ uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
 
+uniform float ambientIntensity;
+
 uniform bool isFlashlight;
 
 void main() {
-    vec3 result = vec3(0.0);
+    vec3 result;
     
     if (isFlashlight) {
         vec3 ambient = light.ambient * texture(material.diffuse, TexCoords).rgb;
@@ -70,8 +72,12 @@ void main() {
             result = light.ambient * texture(material.diffuse, TexCoords).rgb * attenuation;
         }
     } else {
-        result = texture(material.diffuse, TexCoords).rgb * 0.1;
+        float distance = length(light.position - FragPos);
+        float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+        result = light.ambient * texture(material.diffuse, TexCoords).rgb * attenuation;
     }
+
+    result *= ambientIntensity;
         
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, texture(material.diffuse, TexCoords).a);
 }

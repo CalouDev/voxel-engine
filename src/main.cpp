@@ -93,11 +93,11 @@ void processInput(GLFWwindow *window) {
     }
     
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera_player.move((camera_spd * camera_player.getDirection())); //camera_player.move((camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
+        camera_player.move((camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
     }
     
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera_player.move(-(camera_spd * camera_player.getDirection()));//camera_player.move(-(camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
+        camera_player.move(-(camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
     }
     
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
@@ -181,6 +181,7 @@ int main(void) {
 
     voxel_manager.add(Voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT));
     voxel_manager.add(Voxel(TEX::WALL::SIDE, TEX::WALL::TOP, TEX::WALL::BOT, TEX::WALL::WIDTH, TEX::WALL::HEIGHT));
+    voxel_manager.add(Voxel(TEX::GLASS::SIDE, TEX::GLASS::TOP, TEX::GLASS::BOT, TEX::GLASS::WIDTH, TEX::GLASS::HEIGHT));
 
     voxel_manager.use();
 
@@ -396,11 +397,12 @@ int main(void) {
         projection = glm::perspective(glm::radians(fov), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
 
         lightingShader.use();
+        lightingShader.setFloat("ambientIntensity", 0.7f);
         lightingShader.setVec3("light.position", camera_player.getPos());
         lightingShader.setVec3("light.direction", camera_player.getDirection());
         lightingShader.setFloat("light.cutOff",  glm::cos(glm::radians(12.5f)));
         lightingShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
-        lightingShader.setVec3("light.ambient", glm::vec3(0.3f, 0.3f, 0.3f));
+        lightingShader.setVec3("light.ambient", glm::vec3(0.6f, 0.6f, 0.6f));
         lightingShader.setVec3("light.diffuse", glm::vec3(1.5f));
         lightingShader.setVec3("light.specular", glm::vec3(1.0f));
         lightingShader.setBool("isFlashlight", isFlashlight);
@@ -432,11 +434,11 @@ int main(void) {
         lightingShader.setMat4("view", view);
         lightingShader.setMat4("projection", projection);
         lightingShader.setVec3("cameraPos", camera_player.getPos());
-        //lightingShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+        lightingShader.setVec3("ambientIntensity", glm::vec3(2.0f));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(voxel_manager.getManager()[0].getVAO()); // Representing the dirt voxel
+        glBindVertexArray(voxel_manager.getManager()[0].getVAO());
 
         for (int i = -20; i <= 20; ++i) {
             for (int j = -20; j <= 20; ++j) {
@@ -482,6 +484,7 @@ int main(void) {
             if (j == 1 || j == 5) {
                 for (int k = 1; k <= 2; ++k) {
                     for (int i = 1; i <= 3; ++i) {
+                        if (j == 1 && k == 1 && i == 2) continue;
                         model = glm::mat4(1.0f);
                         model = glm::translate(model, glm::vec3((float)j, (float)i, 4.0f + (float)k));
                         lightingShader.setMat4("model", model);
@@ -500,6 +503,15 @@ int main(void) {
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(3.0f, 3.0f, 4.0f));
+        lightingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // GLASS
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(voxel_manager.getManager()[2].getVAO());
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(1.0f, 2.0f, 5.0f));
         lightingShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
