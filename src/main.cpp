@@ -2,6 +2,7 @@
 #include <string>
 #include <math.h>
 #include <filesystem>
+#include <vector>
 
 #include "../include/globals.h"
 #include "../include/texture.h"
@@ -143,6 +144,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 }
 
 int main(void) {
+    srand(time(0));
+
     if (!glfwInit()) {
         std::cerr << "Failed to init GLFW lib" << std::endl;
         exit(EXIT_FAILURE);
@@ -390,6 +393,16 @@ int main(void) {
     glm::mat4 projection;
     glm::mat4 model;
 
+    std::vector<glm::vec2> plant_map;
+
+    for (int i = -19; i <= 19; ++i) {
+        for (int j = -19; j <= 19; ++j) {
+            if (rand() % 10 == 1) {
+                plant_map.push_back(glm::vec2(i, j));
+            }
+        }
+    }
+
     while(!glfwWindowShouldClose(window)) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         currentFrame = (float)glfwGetTime();
@@ -411,13 +424,11 @@ int main(void) {
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(main_voxel_manager.getFlatVoxelManager()[0].getVAO());
 
-        for (int i = -8; i <= -4; ++i) {
-            for (int j = -6; j <= 0; ++j) {
-                glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, glm::vec3((float)i, 1.0f, (float)j));
-                shader_flat_voxel.setMat4("model", model);
-                glDrawArrays(GL_TRIANGLES, 0, 36);
-            }
+        for (glm::vec2 plant_coord : plant_map) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(plant_coord.x, 1.0f, plant_coord.y));
+            shader_flat_voxel.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
         lightingShader.use();
