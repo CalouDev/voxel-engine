@@ -1,11 +1,26 @@
 #version 330 core
 out vec4 FragColor;
 
+#define NB_POINT_LIGHTS 1
+
 struct Material {
     sampler2D diffuse;
     sampler2D specular;    
     float shininess;
 }; 
+
+/*struct PointLight {
+    vec3 position;  
+    vec3 direction;
+  
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    
+    float constant;
+    float linear;
+    float quadratic;
+};*/
 
 struct Light {
     vec3 position;  
@@ -25,12 +40,12 @@ struct Light {
 in vec3 FragPos;  
 in vec3 Normal;  
 in vec2 TexCoords;
-  
+
 uniform vec3 viewPos;
+
 uniform Material material;
 uniform Light light;
-
-uniform float ambientIntensity;
+//uniform PointLight pointLights[NB_POINT_LIGHTS];
 
 uniform bool isFlashlight;
 
@@ -76,8 +91,6 @@ void main() {
         float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
         result = light.ambient * texture(material.diffuse, TexCoords).rgb * attenuation;
     }
-
-    result *= ambientIntensity;
         
     FragColor = vec4(result, texture(material.diffuse, TexCoords).a);
 }

@@ -6,12 +6,15 @@
 #include "../include/globals.h"
 #include "../include/texture.h"
 #include "../include/voxel.h"
+#include "../include/flat_voxel.h"
 #include "../include/voxel_manager.h"
 #include "../include/shader.h"
 #include "../include/camera.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
+
+// static VAO for voxel and flat voxel objects
 
 Camera camera_player(PLAYER::DEFAULT_POS, glm::normalize(glm::vec3(0.0f)));
 
@@ -177,13 +180,14 @@ int main(void) {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    VoxelManager voxel_manager;
+    VoxelManager main_voxel_manager;
 
-    voxel_manager.add(Voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT));
-    voxel_manager.add(Voxel(TEX::WALL::SIDE, TEX::WALL::TOP, TEX::WALL::BOT, TEX::WALL::WIDTH, TEX::WALL::HEIGHT));
-    voxel_manager.add(Voxel(TEX::GLASS::SIDE, TEX::GLASS::TOP, TEX::GLASS::BOT, TEX::GLASS::WIDTH, TEX::GLASS::HEIGHT));
+    main_voxel_manager.addVoxel(Voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT));
+    main_voxel_manager.addVoxel(Voxel(TEX::WALL::SIDE, TEX::WALL::TOP, TEX::WALL::BOT, TEX::WALL::WIDTH, TEX::WALL::HEIGHT));
+    main_voxel_manager.addVoxel(Voxel(TEX::GLASS::SIDE, TEX::GLASS::TOP, TEX::GLASS::BOT, TEX::GLASS::WIDTH, TEX::GLASS::HEIGHT));
+    main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::PLANT::SIDE, TEX::PLANT::WIDTH, TEX::PLANT::HEIGHT));
 
-    voxel_manager.use();
+    main_voxel_manager.use();
 
     float door_vertices[] = {
         -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, TEX::DOOR::SIDE.x, TEX::DOOR::SIDE.y,
@@ -307,6 +311,9 @@ int main(void) {
     glBindVertexArray(lightSourceVAO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    Shader shader_flat_voxel("./shaders/shader_vs_flat_voxel.glsl", "./shaders/shader_fs_flat_voxel.glsl");
+    shader_flat_voxel.use();
     
     Shader lightingShader("./shaders/shader_vs_light.glsl", "./shaders/shader_fs_light.glsl");
     lightingShader.use();
@@ -396,13 +403,29 @@ int main(void) {
         view = glm::lookAt(camera_player.getPos(), camera_player.getPos() + camera_player.getDirection(), camera_player.getUp());
         projection = glm::perspective(glm::radians(fov), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
 
+        shader_flat_voxel.use();
+        shader_flat_voxel.setMat4("view", view);
+        shader_flat_voxel.setMat4("projection", projection);
+        shader_flat_voxel.setInt("Material", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(main_voxel_manager.getFlatVoxelManager()[0].getVAO());
+
+        for (int i = -8; i <= -4; ++i) {
+            for (int j = -6; j <= 0; ++j) {
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3((float)i, 1.0f, (float)j));
+                shader_flat_voxel.setMat4("model", model);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
+        }
+
         lightingShader.use();
-        lightingShader.setFloat("ambientIntensity", 0.7f);
         lightingShader.setVec3("light.position", camera_player.getPos());
         lightingShader.setVec3("light.direction", camera_player.getDirection());
         lightingShader.setFloat("light.cutOff",  glm::cos(glm::radians(12.5f)));
         lightingShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
-        lightingShader.setVec3("light.ambient", glm::vec3(0.6f, 0.6f, 0.6f));
+        lightingShader.setVec3("light.ambient", glm::vec3(0.6f));
         lightingShader.setVec3("light.diffuse", glm::vec3(1.5f));
         lightingShader.setVec3("light.specular", glm::vec3(1.0f));
         lightingShader.setBool("isFlashlight", isFlashlight);
@@ -425,20 +448,18 @@ int main(void) {
         lightingShader.setFloat("pointLights[1].linear", 0.045f);
         lightingShader.setFloat("pointLights[1].quadratic", 0.075f);*/
         lightingShader.setFloat("light.constant", 1.0f);
-        lightingShader.setFloat("light.linear", 0.09f);
-        lightingShader.setFloat("light.quadratic", 0.032f);
+        lightingShader.setFloat("light.linear", 0.022f);
+        lightingShader.setFloat("light.quadratic", 0.0019f);
         lightingShader.setInt("material.diffuse", 0);
         lightingShader.setInt("material.specular", 0);
         lightingShader.setFloat("material.shininess", 32.0f);
-        //lightingShader.setBool("noSpecular", true); // change with a black/with texture (specular map full or none)
         lightingShader.setMat4("view", view);
         lightingShader.setMat4("projection", projection);
         lightingShader.setVec3("cameraPos", camera_player.getPos());
-        lightingShader.setVec3("ambientIntensity", glm::vec3(2.0f));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(voxel_manager.getManager()[0].getVAO());
+        glBindVertexArray(main_voxel_manager.getVoxelManager()[0].getVAO());
 
         for (int i = -20; i <= 20; ++i) {
             for (int j = -20; j <= 20; ++j) {
@@ -465,7 +486,7 @@ int main(void) {
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(voxel_manager.getManager()[1].getVAO());
+        glBindVertexArray(main_voxel_manager.getVoxelManager()[1].getVAO());
 
         for (int j = 1; j <= 5; ++j) {
             if (j == 3) continue;
@@ -509,7 +530,7 @@ int main(void) {
         // GLASS
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(voxel_manager.getManager()[2].getVAO());
+        glBindVertexArray(main_voxel_manager.getVoxelManager()[2].getVAO());
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(1.0f, 2.0f, 5.0f));
         lightingShader.setMat4("model", model);
@@ -563,7 +584,7 @@ int main(void) {
         glfwPollEvents();
     }
 
-    voxel_manager.destroy();
+    main_voxel_manager.destroy();
     glDeleteVertexArrays(1, &VAO_door);
     glDeleteVertexArrays(1, &lightVAO);
 

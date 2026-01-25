@@ -21,9 +21,15 @@ namespace TEX {
     }
 
     namespace GLASS {
-        constexpr glm::vec2 SIDE(0.0f, 0.4f);
-        constexpr glm::vec2 TOP(0.0f, 0.04);
-        constexpr glm::vec2 BOT(0.0f, 0.04);
+        constexpr glm::vec2 SIDE(0.0f, 0.5f);
+        constexpr glm::vec2 TOP(0.1f, 0.5f);
+        constexpr glm::vec2 BOT(0.1f, 0.5f);
+        constexpr float WIDTH = 0.1f;
+        constexpr float HEIGHT = 0.1f;
+    }
+
+    namespace PLANT {
+        constexpr glm::vec2 SIDE(0.9f, 0.9f);
         constexpr float WIDTH = 0.1f;
         constexpr float HEIGHT = 0.1f;
     }
@@ -32,6 +38,11 @@ namespace TEX {
         constexpr glm::vec2 SIDE(0.0f, 0.6f);
         constexpr float WIDTH = 0.1f;
         constexpr float HEIGHT = 0.2f;
+    }
+
+    namespace DARK_SPECULAR {
+        constexpr glm::vec2 POS(0.0f, 0.0f);
+        constexpr float SZ = 0.1f;
     }
 }
 
