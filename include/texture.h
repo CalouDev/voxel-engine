@@ -28,8 +28,20 @@ namespace TEX {
         constexpr float HEIGHT = 0.1f;
     }
 
-    namespace PLANT {
+    namespace GRASS { // rename to grass
         constexpr glm::vec2 SIDE(0.9f, 0.9f);
+        constexpr float WIDTH = 0.1f;
+        constexpr float HEIGHT = 0.1f;
+    }
+
+    namespace DAISY {
+        constexpr glm::vec2 SIDE(0.8f, 0.9f);
+        constexpr float WIDTH = 0.1f;
+        constexpr float HEIGHT = 0.1f;
+    }
+
+    namespace ROSE {
+        constexpr glm::vec2 SIDE(0.7f, 0.9f);
         constexpr float WIDTH = 0.1f;
         constexpr float HEIGHT = 0.1f;
     }

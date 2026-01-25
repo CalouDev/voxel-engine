@@ -188,7 +188,9 @@ int main(void) {
     main_voxel_manager.addVoxel(Voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT));
     main_voxel_manager.addVoxel(Voxel(TEX::WALL::SIDE, TEX::WALL::TOP, TEX::WALL::BOT, TEX::WALL::WIDTH, TEX::WALL::HEIGHT));
     main_voxel_manager.addVoxel(Voxel(TEX::GLASS::SIDE, TEX::GLASS::TOP, TEX::GLASS::BOT, TEX::GLASS::WIDTH, TEX::GLASS::HEIGHT));
-    main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::PLANT::SIDE, TEX::PLANT::WIDTH, TEX::PLANT::HEIGHT));
+    main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::GRASS::SIDE, TEX::GRASS::WIDTH, TEX::GRASS::HEIGHT));
+    main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::DAISY::SIDE, TEX::DAISY::WIDTH, TEX::DAISY::HEIGHT));
+    main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::ROSE::SIDE, TEX::ROSE::WIDTH, TEX::ROSE::HEIGHT));
 
     main_voxel_manager.use();
 
@@ -393,12 +395,19 @@ int main(void) {
     glm::mat4 projection;
     glm::mat4 model;
 
-    std::vector<glm::vec2> plant_map;
+    std::vector<glm::vec2> grass_map;
+    std::vector<glm::vec2> daisy_map;
+    std::vector<glm::vec2> rose_map;
 
     for (int i = -19; i <= 19; ++i) {
         for (int j = -19; j <= 19; ++j) {
-            if (rand() % 10 == 1) {
-                plant_map.push_back(glm::vec2(i, j));
+            int r = rand() % 30;
+            if (r == 1) {
+                grass_map.push_back(glm::vec2(i, j));
+            } else if (r == 2) {
+                daisy_map.push_back(glm::vec2(i, j));
+            } else if (r == 3) {
+                rose_map.push_back(glm::vec2(i, j));
             }
         }
     }
@@ -424,7 +433,25 @@ int main(void) {
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(main_voxel_manager.getFlatVoxelManager()[0].getVAO());
 
-        for (glm::vec2 plant_coord : plant_map) {
+        for (glm::vec2 plant_coord : grass_map) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(plant_coord.x, 1.0f, plant_coord.y));
+            shader_flat_voxel.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        glBindVertexArray(main_voxel_manager.getFlatVoxelManager()[1].getVAO());
+
+        for (glm::vec2 plant_coord : daisy_map) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(plant_coord.x, 1.0f, plant_coord.y));
+            shader_flat_voxel.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        glBindVertexArray(main_voxel_manager.getFlatVoxelManager()[2].getVAO());
+
+        for (glm::vec2 plant_coord : rose_map) {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(plant_coord.x, 1.0f, plant_coord.y));
             shader_flat_voxel.setMat4("model", model);
