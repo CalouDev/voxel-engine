@@ -5,6 +5,8 @@ include/GLFW/
 include/glm/
 include/KHR/
 include/stb_image.h
+include/freetype
+include/ft2build.h
 
 glad.c
 

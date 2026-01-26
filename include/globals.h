@@ -8,6 +8,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <array>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 struct Attenuation {
     float range;
     float constant;
@@ -44,5 +47,7 @@ namespace PLAYER {
     constexpr glm::vec3 DEFAULT_POS(0.0f, 2.0f, 0.0f);
     constexpr float SPD = 8.0f;
 }
+
+constexpr FT_UInt FONT_SIZE = 18;
 
 #endif
