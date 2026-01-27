@@ -254,11 +254,13 @@ int main(void) {
 
     VoxelManager main_voxel_manager;
 
+    // Change to map<string, data>
     main_voxel_manager.addVoxel(Voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT));
     main_voxel_manager.addVoxel(Voxel(TEX::WALL::SIDE, TEX::WALL::TOP, TEX::WALL::BOT, TEX::WALL::WIDTH, TEX::WALL::HEIGHT));
     main_voxel_manager.addVoxel(Voxel(TEX::GLASS::SIDE, TEX::GLASS::TOP, TEX::GLASS::BOT, TEX::GLASS::WIDTH, TEX::GLASS::HEIGHT));
     main_voxel_manager.addVoxel(Voxel(TEX::WOOD::SIDE, TEX::WOOD::TOP, TEX::WOOD::BOT, TEX::WOOD::WIDTH, TEX::WOOD::HEIGHT));
     main_voxel_manager.addVoxel(Voxel(TEX::LEAVES::SIDE, TEX::LEAVES::SIDE, TEX::LEAVES::SIDE, TEX::WOOD::WIDTH, TEX::WOOD::HEIGHT));
+    main_voxel_manager.addVoxel(Voxel(TEX::DIRT_SNOW::SIDE, TEX::DIRT_SNOW::TOP, TEX::DIRT_SNOW::BOT, TEX::DIRT_SNOW::WIDTH, TEX::DIRT_SNOW::HEIGHT));
     main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::GRASS::SIDE, TEX::GRASS::WIDTH, TEX::GRASS::HEIGHT));
     main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::DAISY::SIDE, TEX::DAISY::WIDTH, TEX::DAISY::HEIGHT));
     main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::ROSE::SIDE, TEX::ROSE::WIDTH, TEX::ROSE::HEIGHT));
@@ -620,7 +622,7 @@ int main(void) {
         // LEAVES
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(main_voxel_manager.getVoxelManager()[4].getVAO());
+        glBindVertexArray(main_voxel_manager.getVoxelManager()[4].getVAO()); // "LEAVES"
         for (int i = 0; i < 2; ++i) {
             for (int j = -2; j <= 2; ++j) {
                 for (int k = -2; k <= 2; ++k) {
@@ -642,6 +644,16 @@ int main(void) {
                 }
             }
         }
+
+        // Snow
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(main_voxel_manager.getVoxelManager()[5].getVAO());
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-13.0f, 1.0f, -9.0f));
+        lightingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glBindVertexArray(VAO_door);
         model = glm::mat4(1.0f);

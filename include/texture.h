@@ -10,7 +10,7 @@ namespace TEX {
     namespace DIRT {
         constexpr glm::vec2 SIDE(0.0f, 0.0f);
         constexpr glm::vec2 TOP(0.05f, 0.0f);
-        constexpr glm::vec2 BOT(0.01f, 0.0f);
+        constexpr glm::vec2 BOT(0.1f, 0.0f);
         constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
         constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
     }
@@ -35,6 +35,14 @@ namespace TEX {
         constexpr glm::vec2 SIDE(0.0f, 0.25f);
         constexpr glm::vec2 TOP(0.05f, 0.25f);
         constexpr glm::vec2 BOT(0.05f, 0.25f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace DIRT_SNOW {
+        constexpr glm::vec2 SIDE(0.0f, 0.2f);
+        constexpr glm::vec2 TOP(0.05f, 0.2f);
+        constexpr glm::vec2 BOT(0.1f, 0.2f);
         constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
         constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
     }
