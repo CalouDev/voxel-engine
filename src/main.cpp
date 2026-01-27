@@ -42,13 +42,14 @@ bool canFlashlight = true;
 
 bool canCrouch = true;
 
-bool showDebugText = false;
+bool showDebugText = true;
+bool canShowDebugText = true;
 
 struct Character {
-    unsigned int textureID; // ID handle of the glyph texture
-    glm::ivec2 Size; // Size of glyph
-    glm::ivec2 Bearing; // Offset from baseline to left/top of glyph
-    long int Advance; // unsigned int Advance; // Offset to advance to next glyph
+    unsigned int textureID;
+    glm::ivec2 Size;
+    glm::ivec2 Bearing;
+    long int Advance;
 };
 
 std::map<char, Character> Characters;
@@ -109,11 +110,13 @@ void processInput(GLFWwindow *window) {
     }
     
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera_player.move((camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
+        float next_y = (showDebugText ? camera_player.getDirection().y : 0.0f);
+        camera_player.move((camera_spd * glm::vec3(camera_player.getDirection().x, next_y, camera_player.getDirection().z)));
     }
     
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera_player.move(-(camera_spd * glm::vec3(camera_player.getDirection().x, 0.0f, camera_player.getDirection().z)));
+        float next_y = (showDebugText ? camera_player.getDirection().y : 0.0f);
+        camera_player.move(-(camera_spd * glm::vec3(camera_player.getDirection().x, next_y, camera_player.getDirection().z)));
     }
     
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
@@ -137,7 +140,12 @@ void processInput(GLFWwindow *window) {
     }
 
     if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_PRESS) {
-        showDebugText = !showDebugText;
+        if (canShowDebugText) {
+            showDebugText = !showDebugText;
+            canShowDebugText = false;
+        }
+    } else if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_RELEASE) {
+        canShowDebugText = true;
     }
 
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
@@ -159,27 +167,37 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     }
 }
 
-void RenderText(Shader &s, std::string text, float x, float y, float scale, glm::vec3 color, unsigned int VAO, unsigned int VBO) {
+void RenderText(Shader &s, std::string text, float x, float y, float scale,
+                glm::vec3 color, unsigned int VAO, unsigned int VBO) {
     s.setVec3("textColor", color);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(VAO);
 
-    std::string::const_iterator c;
-    for (c = text.begin(); c != text.end(); c++) {
-        Character ch = Characters[*c];
+    float original_x = x;
+
+    for (char c : text) {
+        if (c == '\n') {
+            y -= Characters['H'].Size.y * scale * LINE_SPACING;
+            x = original_x;
+            continue;
+        }
+
+        Character ch = Characters[c];
 
         float xpos = x + ch.Bearing.x * scale;
         float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
 
         float vertices[6][4] = {
-            { xpos, ypos + h, 0.0f, 0.0f },
-            { xpos, ypos, 0.0f, 1.0f },
-            { xpos + w, ypos, 1.0f, 1.0f },
-            { xpos, ypos + h, 0.0f, 0.0f },
-            { xpos + w, ypos, 1.0f, 1.0f },
-            { xpos + w, ypos + h, 1.0f, 0.0f }
+            { xpos,     ypos + h,   0.0f, 0.0f },
+            { xpos,     ypos,       0.0f, 1.0f },
+            { xpos + w, ypos,       1.0f, 1.0f },
+
+            { xpos,     ypos + h,   0.0f, 0.0f },
+            { xpos + w, ypos,       1.0f, 1.0f },
+            { xpos + w, ypos + h,   1.0f, 0.0f }
         };
 
         glBindTexture(GL_TEXTURE_2D, ch.textureID);
@@ -190,9 +208,6 @@ void RenderText(Shader &s, std::string text, float x, float y, float scale, glm:
 
         x += (ch.Advance >> 6) * scale;
     }
-
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 
@@ -213,7 +228,7 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(WINDOW::WIDTH, WINDOW::HEIGHT, "OpenGL 3.3",  NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WINDOW::WIDTH, WINDOW::HEIGHT, "Voxel Engine - OpenGL 3.3",  NULL, NULL);
     
     if (window == nullptr) {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -242,6 +257,8 @@ int main(void) {
     main_voxel_manager.addVoxel(Voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT));
     main_voxel_manager.addVoxel(Voxel(TEX::WALL::SIDE, TEX::WALL::TOP, TEX::WALL::BOT, TEX::WALL::WIDTH, TEX::WALL::HEIGHT));
     main_voxel_manager.addVoxel(Voxel(TEX::GLASS::SIDE, TEX::GLASS::TOP, TEX::GLASS::BOT, TEX::GLASS::WIDTH, TEX::GLASS::HEIGHT));
+    main_voxel_manager.addVoxel(Voxel(TEX::WOOD::SIDE, TEX::WOOD::TOP, TEX::WOOD::BOT, TEX::WOOD::WIDTH, TEX::WOOD::HEIGHT));
+    main_voxel_manager.addVoxel(Voxel(TEX::LEAVES::SIDE, TEX::LEAVES::SIDE, TEX::LEAVES::SIDE, TEX::WOOD::WIDTH, TEX::WOOD::HEIGHT));
     main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::GRASS::SIDE, TEX::GRASS::WIDTH, TEX::GRASS::HEIGHT));
     main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::DAISY::SIDE, TEX::DAISY::WIDTH, TEX::DAISY::HEIGHT));
     main_voxel_manager.addFlatVoxel(FlatVoxel(TEX::ROSE::SIDE, TEX::ROSE::WIDTH, TEX::ROSE::HEIGHT));
@@ -286,9 +303,6 @@ int main(void) {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(7 * sizeof(float)));
     glEnableVertexAttribArray(2);
-    
-    //Shader classicShader("./shaders/shader_vs_default.glsl", "./shaders/shader_fs_default.glsl");
-    //classicShader.use();
 
     stbi_set_flip_vertically_on_load(true);
 
@@ -312,115 +326,12 @@ int main(void) {
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(tileset_data);
 
-    float light_vertices[] = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
-    };
-
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(light_vertices), light_vertices, GL_STATIC_DRAW);
-    unsigned int lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    unsigned int lightSourceVAO;
-    glGenVertexArrays(1, &lightSourceVAO);
-    glBindVertexArray(lightSourceVAO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
     Shader shader_flat_voxel("./shaders/shader_vs_flat_voxel.glsl", "./shaders/shader_fs_flat_voxel.glsl");
     shader_flat_voxel.use();
     
     Shader lightingShader("./shaders/shader_vs_light.glsl", "./shaders/shader_fs_light.glsl");
     lightingShader.use();
-    //glUniform3fv(glGetUniformLocation(lightingShader.getId(), "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
     lightingShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-
-    int tileset_width2, tileset_height2, nrChannels2;
-    unsigned char *tileset_data2 = stbi_load("./assets/sprites/container.png", &tileset_width2, &tileset_height2, &nrChannels2, 0);
-
-    if (!tileset_data2) {
-        std::cerr << "Failed to load texture" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    unsigned int texture2;
-    glGenTextures(1, &texture2);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tileset_width2, tileset_height2, 0, GL_RGBA, GL_UNSIGNED_BYTE, tileset_data2);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(tileset_data2);
-
-    int container_specular_map_width, container_specular_map_height, container_specular_map_nr_channels;
-    unsigned char *container_specular_map_data = stbi_load("./assets/sprites/container2_specular.png", &container_specular_map_width, &container_specular_map_height, &container_specular_map_nr_channels, 0);
-
-    if (!container_specular_map_data) {
-        std::cerr << "Failed to load texture" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    unsigned int tex_container_specular_map;
-    glGenTextures(1, &tex_container_specular_map);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, tex_container_specular_map);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, container_specular_map_width, container_specular_map_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, container_specular_map_data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(container_specular_map_data);
-
-    Shader lightingSourceShader("./shaders/shader_vs_light.glsl", "./shaders/shader_fs_light_source.glsl");
-    lightingSourceShader.use();
 
     float crosshair_vertices[] = {
         WINDOW::WIDTH/2 - 10, WINDOW::HEIGHT/2, 1.0f, 1.0f, 1.0f, 1.0f,
@@ -695,43 +606,49 @@ int main(void) {
         lightingShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
+        // WOOD
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(main_voxel_manager.getVoxelManager()[3].getVAO());
+        for (int i = 0; i < 6; ++i) {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(11.0f, 1.0f + (float)i, -11.0f));
+            lightingShader.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        // LEAVES
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(main_voxel_manager.getVoxelManager()[4].getVAO());
+        for (int i = 0; i < 2; ++i) {
+            for (int j = -2; j <= 2; ++j) {
+                for (int k = -2; k <= 2; ++k) {
+                    model = glm::mat4(1.0f);
+                    model = glm::translate(model, glm::vec3(11.0f + (float)j, 5.0f + (float)i, -11.0f + (float)k));
+                    lightingShader.setMat4("model", model);
+                    glDrawArrays(GL_TRIANGLES, 0, 36);
+                }
+            }
+        }
+
+        for (int i = 0; i < 2; ++i) {
+            for (int j = -2 + i; j <= 2 - i; ++j) {
+                for (int k = -2 + i; k <= 2 - i; ++k) {
+                    model = glm::mat4(1.0f);
+                    model = glm::translate(model, glm::vec3(11.0f + (float)j, 7.0f + (float)i, -11.0f + (float)k));
+                    lightingShader.setMat4("model", model);
+                    glDrawArrays(GL_TRIANGLES, 0, 36);
+                }
+            }
+        }
+
         glBindVertexArray(VAO_door);
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(3.0f, 1.5f, 4.0f));
         model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         lightingShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 12);
-
-        glBindVertexArray(lightVAO);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, tex_container_specular_map);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
-        lightingShader.setMat4("model", model);
-        lightingShader.setMat4("view", view);
-        lightingShader.setMat4("projection", projection);
-        //lightingShader.setVec3("cameraPos", camera_player.getPos());
-        lightingShader.setInt("material.diffuse", 1);
-        lightingShader.setInt("material.specular", 2);
-        lightingShader.setFloat("material.shininess", 32.0f);
-        //lightingShader.setBool("noSpecular", false);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(4.0f, 1.0f, 3.0f));
-        lightingShader.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        /*lightingSourceShader.use();
-        glBindVertexArray(lightVAO);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        lightingSourceShader.setMat4("model", model);
-        lightingSourceShader.setMat4("view", view);
-        lightingSourceShader.setMat4("projection", projection);
-        glDrawArrays(GL_TRIANGLES, 0, 36);*/
 
         crosshairShader.use();
         glBindVertexArray(crossHairVAO);
@@ -742,12 +659,17 @@ int main(void) {
         textShader.use();
         textShader.setMat4("projection", projection);
         std::ostringstream debug_text;
-        debug_text << "DEBUG [ F9 ]\n";
+        // todo add color (green to ON, red to OFF)
+        debug_text << "DEBUG MODE";
         if (showDebugText) {
-            debug_text << std::fixed << std::setprecision(2) << "Position : (" << camera_player.getPos().x << ", " << camera_player.getPos().y << ", " << camera_player.getPos().z << ")";
+            debug_text << std::fixed << std::setprecision(2) << " ON [ F9 ]";
+            debug_text << "\nPosition : (" << camera_player.getPos().x << ", " << camera_player.getPos().y << ", " << camera_player.getPos().z << ")";
+            debug_text << "\nDirection : (" << camera_player.getDirection().x << ", " << camera_player.getDirection().y << ", " << camera_player.getDirection().z << ")";
+        } else {
+            debug_text << " OFF [ F9 ]";
         }
-        // todo ajouter à la fonction RenderText parsing des \n
-        RenderText(textShader, debug_text.str(), 10.0f, (float)WINDOW::HEIGHT - 17.0f, 1.0f, glm::vec3(1.0, 1.0f, 1.0f), textVAO, textVBO);
+
+        RenderText(textShader, debug_text.str(), 10.0f, (float)WINDOW::HEIGHT - FONT_SIZE - 1.0f, 1.0f, glm::vec3(1.0, 1.0f, 1.0f), textVAO, textVBO);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -755,7 +677,6 @@ int main(void) {
 
     main_voxel_manager.destroy();
     glDeleteVertexArrays(1, &VAO_door);
-    glDeleteVertexArrays(1, &lightVAO);
 
     glfwTerminate();
 

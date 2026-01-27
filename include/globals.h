@@ -49,5 +49,6 @@ namespace PLAYER {
 }
 
 constexpr FT_UInt FONT_SIZE = 18;
+constexpr float LINE_SPACING = 1.5f; // Times font height
 
 #endif
