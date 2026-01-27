@@ -81,6 +81,12 @@ namespace TEX {
         constexpr glm::vec2 POS(0.0f, 0.0f);
         constexpr float SZ = 0.1f;
     }
+
+    namespace INVENTORY {
+        constexpr glm::vec2 SIDE(0.0f, 0.95f);
+        constexpr float WIDTH = 0.4f;
+        constexpr float HEIGHT = 0.05f;
+    }
 }
 
 #endif

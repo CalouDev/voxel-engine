@@ -19,6 +19,7 @@ struct Attenuation {
 };
 
 // Attenuation data from https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
+// unused for now
 constexpr std::array<Attenuation, 12> ATTENUATIONS = {{
     {7.0f, 1.0f, 0.7f, 1.8f},
     {13.0f, 1.0f, 0.35f, 0.44f},

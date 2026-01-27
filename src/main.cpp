@@ -16,8 +16,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 
-// static VAO for voxel and flat voxel objects
-
 Camera camera_player(PLAYER::DEFAULT_POS, glm::normalize(glm::vec3(0.0f)));
 
 float deltaTime, currentFrame;
@@ -167,8 +165,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     }
 }
 
-void RenderText(Shader &s, std::string text, float x, float y, float scale,
-                glm::vec3 color, unsigned int VAO, unsigned int VBO) {
+void RenderText(Shader &s, std::string text, float x, float y, float scale, glm::vec3 color, unsigned int VAO, unsigned int VBO) {
     s.setVec3("textColor", color);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(VAO);
@@ -354,6 +351,31 @@ int main(void) {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    float inventory_vertices[] = {
+        WINDOW::WIDTH / 3.0f, 20.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y,
+        2 * WINDOW::WIDTH / 3.0f, 20.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y,
+        2 * WINDOW::WIDTH / 3.0f, 60.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
+        2 * WINDOW::WIDTH / 3.0f, 60.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
+        WINDOW::WIDTH / 3.0f, 60.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
+        WINDOW::WIDTH / 3.0f, 20.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y
+    };
+
+    unsigned int inventoryVBO;
+    glGenBuffers(1, &inventoryVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, inventoryVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(inventory_vertices), inventory_vertices, GL_STATIC_DRAW);
+
+    unsigned int inventoryVAO;
+    glGenVertexArrays(1, &inventoryVAO);
+    glBindVertexArray(inventoryVAO);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    Shader shaderGui("./shaders/shader_vs_gui.glsl", "./shaders/shader_fs_gui.glsl");
+    shaderGui.use();
 
     Shader crosshairShader("./shaders/shader_vs_default_2d.glsl", "./shaders/shader_fs_default_2d.glsl");
     crosshairShader.use();
@@ -668,6 +690,13 @@ int main(void) {
         crosshairShader.setMat4("projection", projection);
         glDrawArrays(GL_LINES, 0, 4);
 
+        // Inventory
+        shaderGui.use();
+        shaderGui.setMat4("projection", projection);
+        shaderGui.setInt("tex", 0);
+        glBindVertexArray(inventoryVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
         textShader.use();
         textShader.setMat4("projection", projection);
         std::ostringstream debug_text;
@@ -675,6 +704,7 @@ int main(void) {
         debug_text << "DEBUG MODE";
         if (showDebugText) {
             debug_text << std::fixed << std::setprecision(2) << " ON [ F9 ]";
+            debug_text << "\nFPS : " << (int)(1.0f/deltaTime)/10 * 10;
             debug_text << "\nPosition : (" << camera_player.getPos().x << ", " << camera_player.getPos().y << ", " << camera_player.getPos().z << ")";
             debug_text << "\nDirection : (" << camera_player.getDirection().x << ", " << camera_player.getDirection().y << ", " << camera_player.getDirection().z << ")";
         } else {
