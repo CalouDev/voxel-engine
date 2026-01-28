@@ -43,6 +43,8 @@ bool canCrouch = true;
 bool showDebugText = true;
 bool canShowDebugText = true;
 
+int inventory_case_selected = 0;
+
 struct Character {
     unsigned int textureID;
     glm::ivec2 Size;
@@ -157,11 +159,10 @@ void processInput(GLFWwindow *window) {
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    fov -= (float)yoffset;
-    if (fov < 1.0f) {
-        fov = 1.0f;
-    } else if (fov > 45.0f) {
-        fov = 45.0f;
+    if (yoffset > 0) {
+        inventory_case_selected = (inventory_case_selected + 1) % 8;
+    } else {
+        inventory_case_selected = (inventory_case_selected - 1) % 8;
     }
 }
 
@@ -191,7 +192,6 @@ void RenderText(Shader &s, std::string text, float x, float y, float scale, glm:
             { xpos,     ypos + h,   0.0f, 0.0f },
             { xpos,     ypos,       0.0f, 1.0f },
             { xpos + w, ypos,       1.0f, 1.0f },
-
             { xpos,     ypos + h,   0.0f, 0.0f },
             { xpos + w, ypos,       1.0f, 1.0f },
             { xpos + w, ypos + h,   1.0f, 0.0f }
@@ -353,12 +353,12 @@ int main(void) {
     glEnableVertexAttribArray(1);
 
     float inventory_vertices[] = {
-        WINDOW::WIDTH / 3.0f, 20.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y,
-        2 * WINDOW::WIDTH / 3.0f, 20.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y,
-        2 * WINDOW::WIDTH / 3.0f, 60.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
-        2 * WINDOW::WIDTH / 3.0f, 60.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
-        WINDOW::WIDTH / 3.0f, 60.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
-        WINDOW::WIDTH / 3.0f, 20.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y
+        WINDOW::WIDTH / 2.0f - 128.0f, 10.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y,
+        WINDOW::WIDTH / 2.0f + 128.0f, 10.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y,
+        WINDOW::WIDTH / 2.0f + 128.0f, 42.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
+        WINDOW::WIDTH / 2.0f + 128.0f, 42.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
+        WINDOW::WIDTH / 2.0f - 128.0f, 42.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
+        WINDOW::WIDTH / 2.0f - 128.0f, 10.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y
     };
 
     unsigned int inventoryVBO;

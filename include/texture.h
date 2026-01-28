@@ -87,6 +87,12 @@ namespace TEX {
         constexpr float WIDTH = 0.4f;
         constexpr float HEIGHT = 0.05f;
     }
+
+    namespace INVENTORY_CASE_SELECTED {
+        constexpr glm::vec2 SIDE(0.0f, 0.85f);
+        constexpr float WIDTH = (float)TILE_SZ + 1.0f / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ + 1.0f / TILESET_SZ;
+    }
 }
 
 #endif

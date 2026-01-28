@@ -12,7 +12,7 @@ private:
     unsigned int VBO;
     unsigned int EBO;
     float vertices[36 * 8];
-    int indices[12];
+    // int indices[12];
 public:
     Voxel(glm::vec2 tex_coord_side, glm::vec2 tex_coord_top, glm::vec2 tex_coord_bot, float width, float height);
 
