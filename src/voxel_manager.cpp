@@ -1,7 +1,5 @@
 #include "../include/voxel_manager.h"
 
-VoxelManager::VoxelManager() {}
-
 void VoxelManager::addVoxel(Voxel voxel) {
     voxel_manager.push_back(voxel);
 }

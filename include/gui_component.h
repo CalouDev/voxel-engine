@@ -5,14 +5,19 @@
 
 class GuiComponent {
 private:
-    unsigned int VAO;
-    unsigned int VBO;
+    float width, height;
+    GLuint VAO;
+    GLuint VBO;
     float vertices[24];
 public:
-    GuiComponent(glm::vec2 pos, glm::vec2 tex_coords, float width, float height);
+    GuiComponent() = default;
+    GuiComponent(glm::vec2 _pos, glm::vec2 tex_coords, glm::vec2 tex_sz, float width, float height);
 
-    void use();
+    void move(glm::vec2 pos);
     void destroy();
+
+    inline GLuint getVAO() const { return VAO; }
+    void setPosition(glm::vec2 pos);
 };
 
 #endif

@@ -1,12 +1,21 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+#include <iostream>
+#include <string>
+#include <math.h>
+#include <filesystem>
+#include <vector>
+#include <map>
+#include <unordered_map>
+#include <array>
+#include <vector>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <array>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -51,5 +60,103 @@ namespace PLAYER {
 
 constexpr FT_UInt FONT_SIZE = 18;
 constexpr float LINE_SPACING = 1.5f; // Times font height
+
+constexpr int TILESET_SZ = 320;
+constexpr int TILE_SZ = 16;
+
+namespace TEX {
+    namespace DIRT {
+        constexpr glm::vec2 SIDE(0.0f, 0.0f);
+        constexpr glm::vec2 TOP(0.05f, 0.0f);
+        constexpr glm::vec2 BOT(0.1f, 0.0f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace WALL {
+        constexpr glm::vec2 SIDE(0.0f, 0.05f);
+        constexpr glm::vec2 TOP(0.05f, 0.05f);
+        constexpr glm::vec2 BOT(0.01f, 0.05f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace GLASS {
+        constexpr glm::vec2 SIDE(0.0f, 0.1f);
+        constexpr glm::vec2 TOP(0.05f, 0.1f);
+        constexpr glm::vec2 BOT(0.01f, 0.1f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace WOOD {
+        constexpr glm::vec2 SIDE(0.0f, 0.25f);
+        constexpr glm::vec2 TOP(0.05f, 0.25f);
+        constexpr glm::vec2 BOT(0.05f, 0.25f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace DIRT_SNOW {
+        constexpr glm::vec2 SIDE(0.0f, 0.2f);
+        constexpr glm::vec2 TOP(0.05f, 0.2f);
+        constexpr glm::vec2 BOT(0.1f, 0.2f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace LEAVES {
+        constexpr glm::vec2 SIDE(0.0f, 0.3f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace GRASS {
+        constexpr glm::vec2 SIDE(0.1f, 0.65f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace DAISY {
+        constexpr glm::vec2 SIDE(0.05f, 0.6f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace ROSE {
+        constexpr glm::vec2 SIDE(0.0f, 0.6f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace DOOR {
+        constexpr glm::vec2 SIDE(0.0f, 0.5f);
+        constexpr float WIDTH = (float)TILE_SZ / TILESET_SZ;
+        constexpr float HEIGHT = 2 * (float)TILE_SZ / TILESET_SZ;
+    }
+
+    namespace DARK_SPECULAR {
+        constexpr glm::vec2 POS(0.0f, 0.0f);
+        constexpr float SZ = 0.1f;
+    }
+
+    namespace GUI {
+        namespace INVENTORY {
+            constexpr glm::vec2 SIDE(0.0f, 0.95f);
+            constexpr float TEX_WIDTH = 0.4f;
+            constexpr float TEX_HEIGHT = 0.05f;
+            constexpr float WIDTH = 256.0f;
+            constexpr float HEIGHT = 32.0f;
+        }
+
+        namespace INVENTORY_CASE_SELECTED {
+            constexpr glm::vec2 SIDE(0.0f, 0.846875f);
+            constexpr float TEX_WIDTH = ((float)TILE_SZ + 1.0f) / TILESET_SZ;
+            constexpr float TEX_HEIGHT = ((float)TILE_SZ + 2.0f) / TILESET_SZ;
+            constexpr float WIDTH = 34.0f;
+            constexpr float HEIGHT = 34.0f;
+        }
+    }
+}
 
 #endif

@@ -1,21 +1,15 @@
-#include <iostream>
-#include <string>
-#include <math.h>
-#include <filesystem>
-#include <vector>
-#include <map>
-
 #include "../include/globals.h"
-#include "../include/texture.h"
 #include "../include/voxel.h"
 #include "../include/flat_voxel.h"
 #include "../include/voxel_manager.h"
+#include "../include/gui_manager.h"
 #include "../include/shader.h"
 #include "../include/camera.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 
+GuiManager main_gui_manager;
 Camera camera_player(PLAYER::DEFAULT_POS, glm::normalize(glm::vec3(0.0f)));
 
 float deltaTime, currentFrame;
@@ -44,6 +38,7 @@ bool showDebugText = true;
 bool canShowDebugText = true;
 
 int inventory_case_selected = 0;
+glm::vec2 inventory_case_selected_pos = glm::vec2(WINDOW::WIDTH/2.0f - TEX::GUI::INVENTORY::WIDTH/2.0f - 1.0f, 8.0f);
 
 struct Character {
     unsigned int textureID;
@@ -158,13 +153,7 @@ void processInput(GLFWwindow *window) {
     }
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    if (yoffset > 0) {
-        inventory_case_selected = (inventory_case_selected + 1) % 8;
-    } else {
-        inventory_case_selected = (inventory_case_selected - 1) % 8;
-    }
-}
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 void RenderText(Shader &s, std::string text, float x, float y, float scale, glm::vec3 color, unsigned int VAO, unsigned int VBO) {
     s.setVec3("textColor", color);
@@ -250,6 +239,8 @@ int main(void) {
     glfwSetScrollCallback(window, scroll_callback);
 
     VoxelManager main_voxel_manager;
+
+    main_gui_manager.initialize();
 
     // Change to map<string, data>
     main_voxel_manager.addVoxel(Voxel(TEX::DIRT::SIDE, TEX::DIRT::TOP, TEX::DIRT::BOT, TEX::DIRT::WIDTH, TEX::DIRT::HEIGHT));
@@ -352,28 +343,6 @@ int main(void) {
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    float inventory_vertices[] = {
-        WINDOW::WIDTH / 2.0f - 128.0f, 10.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y,
-        WINDOW::WIDTH / 2.0f + 128.0f, 10.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y,
-        WINDOW::WIDTH / 2.0f + 128.0f, 42.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
-        WINDOW::WIDTH / 2.0f + 128.0f, 42.0f, TEX::INVENTORY::SIDE.x + TEX::INVENTORY::WIDTH, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
-        WINDOW::WIDTH / 2.0f - 128.0f, 42.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y + TEX::INVENTORY::HEIGHT,
-        WINDOW::WIDTH / 2.0f - 128.0f, 10.0f, TEX::INVENTORY::SIDE.x, TEX::INVENTORY::SIDE.y
-    };
-
-    unsigned int inventoryVBO;
-    glGenBuffers(1, &inventoryVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, inventoryVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(inventory_vertices), inventory_vertices, GL_STATIC_DRAW);
-
-    unsigned int inventoryVAO;
-    glGenVertexArrays(1, &inventoryVAO);
-    glBindVertexArray(inventoryVAO);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
     Shader shaderGui("./shaders/shader_vs_gui.glsl", "./shaders/shader_fs_gui.glsl");
     shaderGui.use();
 
@@ -415,31 +384,18 @@ int main(void) {
     }
 
     FT_Set_Pixel_Sizes(face, 0, FONT_SIZE);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // no byte-alignment restriction
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     for (unsigned char c = 0; c < 128; c++) {
-        // load character glyph
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-        {
-        std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
-        continue;
+        if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+            std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+            continue;
         }
-        // generate texture
+
         unsigned int texture;
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RED,
-        face->glyph->bitmap.width,
-        face->glyph->bitmap.rows,
-        0,
-        GL_RED,
-        GL_UNSIGNED_BYTE,
-        face->glyph->bitmap.buffer
-        );
-        // set texture options
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -477,6 +433,7 @@ int main(void) {
 
         glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
 
         view = glm::lookAt(camera_player.getPos(), camera_player.getPos() + camera_player.getDirection(), camera_player.getUp());
         projection = glm::perspective(glm::radians(fov), (float)WINDOW::WIDTH / WINDOW::HEIGHT, 0.1f, 200.0f);
@@ -690,11 +647,23 @@ int main(void) {
         crosshairShader.setMat4("projection", projection);
         glDrawArrays(GL_LINES, 0, 4);
 
+        glDisable(GL_DEPTH_TEST);
+
         // Inventory
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
         shaderGui.use();
         shaderGui.setMat4("projection", projection);
         shaderGui.setInt("tex", 0);
-        glBindVertexArray(inventoryVAO);
+        main_gui_manager.bind("inventory");
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        shaderGui.use();
+        shaderGui.setMat4("projection", projection);
+        shaderGui.setInt("tex", 0);
+        main_gui_manager.bind("inventory_case_selected");
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         textShader.use();
@@ -718,9 +687,21 @@ int main(void) {
     }
 
     main_voxel_manager.destroy();
+    main_gui_manager.destroy();
     glDeleteVertexArrays(1, &VAO_door);
 
     glfwTerminate();
 
     exit(EXIT_SUCCESS);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    if (yoffset > 0) {
+        inventory_case_selected = (inventory_case_selected + 7) % 8;
+    } else {
+        inventory_case_selected = (inventory_case_selected + 1) % 8;
+    }
+
+    main_gui_manager.getManager()["inventory_case_selected"].setPosition(inventory_case_selected_pos);
+    main_gui_manager.getManager()["inventory_case_selected"].move(glm::vec2(inventory_case_selected * TEX::GUI::INVENTORY::WIDTH / 8.0f, 0.0f));
 }

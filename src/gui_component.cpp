@@ -1,25 +1,22 @@
 #include "../include/gui_component.h"
 
-GuiComponent::GuiComponent(glm::vec2 pos, glm::vec2 tex_coords, float width, float height)
-    : vertices{
+GuiComponent::GuiComponent(glm::vec2 pos, glm::vec2 tex_coords, glm::vec2 tex_sz, float width, float height)
+    : width(width), height(height), vertices{
         pos.x, pos.y, tex_coords.x, tex_coords.y,
-        pos.x + width, pos.y, tex_coords.x + width, tex_coords.y,
-        pos.x + width, pos.y, tex_coords.x + width, tex_coords.y + height,
-        pos.x + width, pos.y, tex_coords.x + width, tex_coords.y + height,
-        pos.x, pos.y + height, tex_coords.x, tex_coords.y + height,
+        pos.x + width, pos.y, tex_coords.x + tex_sz.x, tex_coords.y,
+        pos.x + width, pos.y + height, tex_coords.x + tex_sz.x, tex_coords.y + tex_sz.y,
+        pos.x + width, pos.y + height, tex_coords.x + tex_sz.x, tex_coords.y + tex_sz.y,
+        pos.x, pos.y + height, tex_coords.x, tex_coords.y + tex_sz.y,
         pos.x, pos.y, tex_coords.x, tex_coords.y
     }
-{}
-
-void GuiComponent::use() {
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    unsigned int VAO;
+{
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
+
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
@@ -28,4 +25,26 @@ void GuiComponent::use() {
 
 void GuiComponent::destroy() {
     glDeleteVertexArrays(1, &VAO);
+}
+
+void GuiComponent::move(glm::vec2 pos) {
+    for (int i = 0; i < 6; ++i) {
+        vertices[i*4] += pos.x;
+        vertices[i*4+1] += pos.y;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 
+}
+
+void GuiComponent::setPosition(glm::vec2 pos) {
+    vertices[0] = pos.x; vertices[1] = pos.y;
+    vertices[4] = pos.x + width; vertices[5] = pos.y;
+    vertices[8] = pos.x + width; vertices[9] = pos.y + height;
+    vertices[12] = pos.x + width; vertices[13] = pos.y + height;
+    vertices[16] = pos.x; vertices[17] = pos.y + height;
+    vertices[20] = pos.x; vertices[21] = pos.y;
+    
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 }

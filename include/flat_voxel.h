@@ -1,9 +1,6 @@
 #ifndef FLAT_VOXEL_H
 #define FLAT_VOXEL_H
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #include "globals.h"
 
 class FlatVoxel {
