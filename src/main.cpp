@@ -323,26 +323,6 @@ int main(void) {
     lightingShader.use();
     lightingShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    float crosshair_vertices[] = {
-        WINDOW::WIDTH/2 - 10, WINDOW::HEIGHT/2, 1.0f, 1.0f, 1.0f, 1.0f,
-        WINDOW::WIDTH/2 + 10, WINDOW::HEIGHT/2, 1.0f, 1.0f, 1.0f, 1.0f,
-        WINDOW::WIDTH/2, WINDOW::HEIGHT/2 - 10, 1.0f, 1.0f, 1.0f, 1.0f,
-        WINDOW::WIDTH/2, WINDOW::HEIGHT/2 + 10, 1.0f, 1.0f, 1.0f, 1.0f
-    };
-
-    unsigned int crosshairVBO;
-    glGenBuffers(1, &crosshairVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(crosshair_vertices), crosshair_vertices, GL_STATIC_DRAW);
-
-    unsigned int crossHairVAO;
-    glGenVertexArrays(1, &crossHairVAO);
-    glBindVertexArray(crossHairVAO);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
     Shader shaderGui("./shaders/shader_vs_gui.glsl", "./shaders/shader_fs_gui.glsl");
     shaderGui.use();
 
@@ -641,21 +621,18 @@ int main(void) {
         lightingShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 12);
 
-        crosshairShader.use();
-        glBindVertexArray(crossHairVAO);
+        
+        // GUI
         projection = glm::ortho(0.0f, (float)WINDOW::WIDTH, 0.0f, (float)WINDOW::HEIGHT);
-        crosshairShader.setMat4("projection", projection);
-        glDrawArrays(GL_LINES, 0, 4);
-
         glDisable(GL_DEPTH_TEST);
-
-        // Inventory
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         shaderGui.use();
         shaderGui.setMat4("projection", projection);
         shaderGui.setInt("tex", 0);
-        main_gui_manager.bind("inventory");
+
+        main_gui_manager.drawAll();
+        /*main_gui_manager.bind("inventory");
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glActiveTexture(GL_TEXTURE0);
@@ -665,6 +642,12 @@ int main(void) {
         shaderGui.setInt("tex", 0);
         main_gui_manager.bind("inventory_case_selected");
         glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        shaderGui.use();
+        shaderGui.setMat4("projection", projection);
+        shaderGui.setInt("tex", 0);
+        main_gui_manager.bind("crosshair");
+        glDrawArrays(GL_TRIANGLES, 0, 6);*/
 
         textShader.use();
         textShader.setMat4("projection", projection);
@@ -702,6 +685,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
         inventory_case_selected = (inventory_case_selected + 1) % 8;
     }
 
-    main_gui_manager.getManager()["inventory_case_selected"].setPosition(inventory_case_selected_pos);
-    main_gui_manager.getManager()["inventory_case_selected"].move(glm::vec2(inventory_case_selected * TEX::GUI::INVENTORY::WIDTH / 8.0f, 0.0f));
+    main_gui_manager.getManager()[1].setPosition(inventory_case_selected_pos);
+    main_gui_manager.getManager()[1].move(glm::vec2(inventory_case_selected * TEX::GUI::INVENTORY::WIDTH / 8.0f, 0.0f));
 }

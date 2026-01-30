@@ -6,15 +6,15 @@
 
 class GuiManager {
 private:
-    std::unordered_map<std::string, GuiComponent> manager;
+    std::vector<GuiComponent> manager;
 public:
     GuiManager() = default;
 
     void initialize();
-    void bind(std::string gui_name);
+    void drawAll();
     void destroy();
 
-    inline std::unordered_map<std::string, GuiComponent> getManager() { return manager; }
+    inline std::vector<GuiComponent> getManager() { return manager; }
 };
 
 #endif

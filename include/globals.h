@@ -141,20 +141,28 @@ namespace TEX {
     }
 
     namespace GUI {
+        namespace CROSSHAIR {
+            constexpr glm::vec2 SIDE(0.4f, 0.95f);
+            constexpr float TEX_WIDTH = (float)TILE_SZ / TILESET_SZ;
+            constexpr float TEX_HEIGHT = (float)TILE_SZ / TILESET_SZ;
+            constexpr float WIDTH = 20.0f;
+            constexpr float HEIGHT = 20.0f;
+        }
+
         namespace INVENTORY {
             constexpr glm::vec2 SIDE(0.0f, 0.95f);
             constexpr float TEX_WIDTH = 0.4f;
             constexpr float TEX_HEIGHT = 0.05f;
-            constexpr float WIDTH = 256.0f;
-            constexpr float HEIGHT = 32.0f;
+            constexpr float WIDTH = 512.0f;
+            constexpr float HEIGHT = 64.0f;
         }
 
         namespace INVENTORY_CASE_SELECTED {
             constexpr glm::vec2 SIDE(0.0f, 0.846875f);
             constexpr float TEX_WIDTH = ((float)TILE_SZ + 1.0f) / TILESET_SZ;
             constexpr float TEX_HEIGHT = ((float)TILE_SZ + 2.0f) / TILESET_SZ;
-            constexpr float WIDTH = 34.0f;
-            constexpr float HEIGHT = 34.0f;
+            constexpr float WIDTH = 68.0f;
+            constexpr float HEIGHT = 68.0f;
         }
     }
 }
