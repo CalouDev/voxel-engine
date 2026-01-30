@@ -11,7 +11,7 @@ private:
     float vertices[24];
 public:
     GuiComponent() = default;
-    GuiComponent(glm::vec2 _pos, glm::vec2 tex_coords, glm::vec2 tex_sz, float width, float height);
+    GuiComponent(const GuiData& data);
 
     void move(glm::vec2 pos);
     void destroy();

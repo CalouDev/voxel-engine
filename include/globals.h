@@ -20,30 +20,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-struct Attenuation {
-    float range;
-    float constant;
-    float linear;
-    float quadratic;
-};
-
-// Attenuation data from https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
-// unused for now
-constexpr std::array<Attenuation, 12> ATTENUATIONS = {{
-    {7.0f, 1.0f, 0.7f, 1.8f},
-    {13.0f, 1.0f, 0.35f, 0.44f},
-    {20.0f, 1.0f, 0.22f, 0.20f},
-    {32.0f, 1.0f, 0.14f, 0.07f},
-    {50.0f, 1.0f, 0.09f, 0.032f},
-    {65.0f, 1.0f, 0.07f, 0.017f},
-    {100.0f, 1.0f, 0.045f, 0.0075f},
-    {160.0f, 1.0f, 0.027f, 0.0028f},
-    {200.0f, 1.0f, 0.022f, 0.0019f},
-    {325.0f, 1.0f, 0.014f, 0.0007f},
-    {600.0f, 1.0f, 0.007f, 0.0002f},
-    {3250.0f, 1.0f, 0.0014f, 0.000007f}
-}};
-
 namespace WINDOW {
     constexpr int WIDTH = 1280;
     constexpr int HEIGHT = 720;
@@ -63,6 +39,40 @@ constexpr float LINE_SPACING = 1.5f; // Times font height
 
 constexpr int TILESET_SZ = 320;
 constexpr int TILE_SZ = 16;
+constexpr int TILE_RATIO = TILE_SZ / TILESET_SZ;  
+
+struct GuiData {
+    glm::vec2 pos;
+    glm::vec2 sz;
+    glm::vec2 tex_coord;
+    glm::vec2 tex_sz;
+};
+
+constexpr std::array<GuiData, 3> GUI = {{
+    // INVENTORY
+    {
+        glm::vec2(WINDOW::WIDTH/2.0f - 512.0f/2, 10.0f),
+        glm::vec2(512.0, 64.0f),
+        glm::vec2(0.0f, 0.95f),
+        glm::vec2(0.4f, 0.05f)
+    },
+
+    // INENVTORY SELECTED CASE
+    {
+        glm::vec2(WINDOW::WIDTH/2.0f - 512.0f/2 - 2.0f, 7.0f),
+        glm::vec2(68.0f, 68.0f),
+        glm::vec2(0.0f, 0.846875f),
+        glm::vec2(((float)TILE_SZ + 1.0f) / TILESET_SZ, ((float)TILE_SZ + 2.0f) / TILESET_SZ)
+    },
+
+    // CROSSHAIR
+    {
+        glm::vec2(WINDOW::WIDTH/2.0f - 20.0f/2, WINDOW::HEIGHT/2.0f + 20.0f/2),
+        glm::vec2(20.0f, 20.0f),
+        glm::vec2(0.4f, 0.95),
+        glm::vec2(TILE_RATIO, TILE_RATIO)
+    }
+}};
 
 namespace TEX {
     namespace DIRT {
@@ -138,32 +148,6 @@ namespace TEX {
     namespace DARK_SPECULAR {
         constexpr glm::vec2 POS(0.0f, 0.0f);
         constexpr float SZ = 0.1f;
-    }
-
-    namespace GUI {
-        namespace CROSSHAIR {
-            constexpr glm::vec2 SIDE(0.4f, 0.95f);
-            constexpr float TEX_WIDTH = (float)TILE_SZ / TILESET_SZ;
-            constexpr float TEX_HEIGHT = (float)TILE_SZ / TILESET_SZ;
-            constexpr float WIDTH = 20.0f;
-            constexpr float HEIGHT = 20.0f;
-        }
-
-        namespace INVENTORY {
-            constexpr glm::vec2 SIDE(0.0f, 0.95f);
-            constexpr float TEX_WIDTH = 0.4f;
-            constexpr float TEX_HEIGHT = 0.05f;
-            constexpr float WIDTH = 512.0f;
-            constexpr float HEIGHT = 64.0f;
-        }
-
-        namespace INVENTORY_CASE_SELECTED {
-            constexpr glm::vec2 SIDE(0.0f, 0.846875f);
-            constexpr float TEX_WIDTH = ((float)TILE_SZ + 1.0f) / TILESET_SZ;
-            constexpr float TEX_HEIGHT = ((float)TILE_SZ + 2.0f) / TILESET_SZ;
-            constexpr float WIDTH = 68.0f;
-            constexpr float HEIGHT = 68.0f;
-        }
     }
 }
 

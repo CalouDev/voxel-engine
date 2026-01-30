@@ -38,7 +38,7 @@ bool showDebugText = true;
 bool canShowDebugText = true;
 
 int inventory_case_selected = 0;
-glm::vec2 inventory_case_selected_pos = glm::vec2(WINDOW::WIDTH/2.0f - TEX::GUI::INVENTORY::WIDTH/2.0f - 1.0f, 8.0f);
+glm::vec2 inventory_case_selected_pos = glm::vec2(WINDOW::WIDTH/2.0f - 512.0f/2.0f - 1.0f, 8.0f);
 
 struct Character {
     unsigned int textureID;
@@ -630,24 +630,7 @@ int main(void) {
         shaderGui.use();
         shaderGui.setMat4("projection", projection);
         shaderGui.setInt("tex", 0);
-
         main_gui_manager.drawAll();
-        /*main_gui_manager.bind("inventory");
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        shaderGui.use();
-        shaderGui.setMat4("projection", projection);
-        shaderGui.setInt("tex", 0);
-        main_gui_manager.bind("inventory_case_selected");
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        shaderGui.use();
-        shaderGui.setMat4("projection", projection);
-        shaderGui.setInt("tex", 0);
-        main_gui_manager.bind("crosshair");
-        glDrawArrays(GL_TRIANGLES, 0, 6);*/
 
         textShader.use();
         textShader.setMat4("projection", projection);
@@ -686,5 +669,5 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     }
 
     main_gui_manager.getManager()[1].setPosition(inventory_case_selected_pos);
-    main_gui_manager.getManager()[1].move(glm::vec2(inventory_case_selected * TEX::GUI::INVENTORY::WIDTH / 8.0f, 0.0f));
+    main_gui_manager.getManager()[1].move(glm::vec2(inventory_case_selected * 512.0f / 8.0f, 0.0f));
 }
